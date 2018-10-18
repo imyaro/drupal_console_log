@@ -1,0 +1,3 @@
+name = Console log
+description = Logging interface to display messages in the browser console.
+core = 7.x

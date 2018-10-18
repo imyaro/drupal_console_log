@@ -1,0 +1,16 @@
+<?php
+/**
+ * @file
+ * File contains main hooks and functions fro the Console Log: Watchdog module.
+ */
+
+/**
+ * Implements hook_watchdog().
+ */
+function console_log_watchdog_watchdog(array $log_entry) {
+  console_log_message(
+    strip_tags(t($log_entry['message'], $log_entry['variables'])),
+    $log_entry['type'],
+    $log_entry['severity']
+  );
+}

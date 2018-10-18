@@ -1,0 +1,4 @@
+name = Console log: Watchdog
+description = Log Watchdog messages to the console log.
+core = 7.x
+dependencies[] = console_log

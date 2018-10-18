@@ -1,0 +1,113 @@
+<?php
+/**
+ * @file
+ * Contains main functions and hooks for "Console log" module.
+ */
+
+/**
+ * Adds a message into the Drupal settings on the front side.
+ *
+ * @param $message
+ *   Message to display in the log.
+ * @param $type
+ *   Prefix for the debug message.
+ * @param int $severity
+ *   Serenity. The same as WATCHDOG messages.
+ */
+function console_log_message($message, $type, $severity = WATCHDOG_ALERT) {
+  // Add JS file to handle message.
+  console_log_add_js();
+
+  if (console_log_is_active()) {
+    // Add a "setting" with the message.
+    drupal_add_js(
+      ['cLog' => [
+        'debug' => [
+          ['type' => $type, 'message' => $message, 'severity' => $severity],
+        ],
+      ]],
+      ['type' => 'setting']
+    );
+  }
+}
+
+/**
+ * Adds a JS file for a debug.
+ */
+function console_log_add_js() {
+  if (console_log_is_active()) {
+    // We can get lots of the messages, it have to work faster then drupal_static
+    // can do.
+    if (!isset($drupal_static_fast)) {
+      $drupal_static_fast['js_added'] = &drupal_static('console_log__js_added');
+    }
+
+    if (!$drupal_static_fast['js_added']) {
+      // Checking output for the module.
+      // @todo make a configuration for this one on the settings form.
+      $active_debug_state = variable_get('console_log__active_debug', 'console.log');
+
+      $settings = console_log_get_settings();
+
+      $js_data = [
+        'file_path' => drupal_get_path('module', 'console_log') . '/misc/js/' . $active_debug_state . '.js',
+        'settings' => $settings,
+      ];
+
+      // Allow other modules change files.
+      // @todo mape an api.php file to handle it.
+      drupal_alter('console_log_js_data', $js_data);
+
+      // Maybe other modules removed it, so we don't have to add it now.
+      if ($js_data) {
+        // Abstract log functions.
+        drupal_add_js(drupal_get_path('module', 'console_log') . '/misc/js/log.js');
+
+        // Add a file with the debugger.
+        drupal_add_js($js_data['file_path']);
+
+        // Settings for the logger.
+        drupal_add_js(['cLog' => $js_data['settings']], ['type' => 'setting']);
+      }
+
+      // Tell our function that we already have an added JS at the next run.
+      $drupal_static_fast['js_added'] = TRUE;
+    }
+  }
+
+}
+
+/**
+ * Checks if debug available.
+ *
+ * @return bool
+ *   TRUE - active, false - no.
+ */
+function console_log_is_active() {
+  // For a faster access.
+  static $debug_active;
+
+  if ($debug_active === NULL) {
+    $variable = 'console_log_is_active';
+    $debug_active = variable_get($variable)
+      // Checking for admins.
+      || (variable_get($variable . '_for_admin') && user_access('administer site configuration'));
+  }
+
+  return $debug_active;
+}
+
+/**
+ * Provides module settings array.
+ *
+ * @return array
+ *   Settings array.
+ */
+function console_log_get_settings() {
+  // @todo do a configurable settings.
+
+  return [
+    'priority' => ['high' => '#770209', 'normal' => '#426402'],
+    'method' => 'info',
+  ];
+}
