@@ -5,6 +5,18 @@
  */
 
 /**
+ * Adds a log into the console
+ *
+ * @param string $message
+ *   Message text
+ * @param string $type
+ *   Type of the message.
+ */
+function console_log($message, $type) {
+  console_log_message($message, $type);
+}
+
+/**
  * Adds a message into the Drupal settings on the front side.
  *
  * @param $message
@@ -55,7 +67,7 @@ function console_log_add_js() {
       ];
 
       // Allow other modules change files.
-      // @todo mape an api.php file to handle it.
+      // @todo make an api.php file to handle it.
       drupal_alter('console_log_js_data', $js_data);
 
       // Maybe other modules removed it, so we don't have to add it now.
