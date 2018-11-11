@@ -5,15 +5,30 @@
  */
 
 /**
- * Adds a log into the console
- *
- * @param string $message
- *   Message text
- * @param string $type
- *   Type of the message.
+ * Implements hook_menu().
  */
-function console_log($message, $type) {
-  console_log_message($message, $type);
+function console_log_menu() {
+  $items['admin/config/development/console-log'] = [
+    'title' => 'Console log',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['console_log_settings_form'],
+    'access arguments' => ['administer site configuration'],
+    'file' => 'includes/admin.inc',
+  ];
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function console_log_permission() {
+  return [
+    'view console logs' => [
+      'title' => t('View console logs'),
+      'description' => t('Allows user view console logs when option "Active by permission" ticked'),
+    ]
+  ];
 }
 
 /**
@@ -34,7 +49,7 @@ function console_log_message($message, $type, $severity = WATCHDOG_ALERT) {
     // Add a "setting" with the message.
     drupal_add_js(
       ['cLog' => [
-        'debug' => [
+        'add' => [
           ['type' => $type, 'message' => $message, 'severity' => $severity],
         ],
       ]],
@@ -86,14 +101,13 @@ function console_log_add_js() {
       $drupal_static_fast['js_added'] = TRUE;
     }
   }
-
 }
 
 /**
  * Checks if debug available.
  *
  * @return bool
- *   TRUE - active, false - no.
+ *   TRUE - active, FALSE - no (o_O).
  */
 function console_log_is_active() {
   // For a faster access.
@@ -102,8 +116,8 @@ function console_log_is_active() {
   if ($debug_active === NULL) {
     $variable = 'console_log_is_active';
     $debug_active = variable_get($variable)
-      // Checking for admins.
-      || (variable_get($variable . '_for_admin') && user_access('administer site configuration'));
+      // Checking by permission.
+      || (variable_get($variable . '_by_permission') && user_access('view console logs'));
   }
 
   return $debug_active;
@@ -115,11 +129,15 @@ function console_log_is_active() {
  * @return array
  *   Settings array.
  */
-function console_log_get_settings() {
-  // @todo do a configurable settings.
+function console_log_get_options() {
+  $options = variable_get('console_log_options');
 
-  return [
-    'priority' => ['high' => '#770209', 'normal' => '#426402'],
-    'method' => 'info',
-  ];
+  if ($options === NULL) {
+    $options = [
+      'priority' => ['high' => '#770209', 'normal' => '#426402'],
+      'method' => 'info',
+    ];
+  }
+
+  return $options;
 }
